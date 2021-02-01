@@ -19,7 +19,8 @@ typedef struct Memory {
 } Memory;
 
 enum Flags {
-    J = (0 << 0)
+    J = (0 << 0),
+    Z = (0 << 1)
 };
 
 void resetCPU(CPU* cpu, Memory* mem) {
@@ -54,6 +55,17 @@ void fetch(CPU* cpu, Memory* mem, uint8_t* data) {
 #define INS_JMP_REG (0xB2)
 
 #define WORD(h, l) (((h) << 8) + (l))
+
+void setFlag(CPU* cpu, int flag, unsigned int value) {
+    if (value == 1)
+        cpu->FLAGS |= flag;
+    else
+        cpu->FLAGS &= ~(flag);
+}
+
+char getFlag(CPU* cpu, int flag) {
+    return (cpu->FLAGS & flag) > 0;
+}
 
 int doOne(CPU* cpu, Memory* mem) {
     uint8_t ins;
