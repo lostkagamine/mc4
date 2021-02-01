@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="emu.c">
+    <ClCompile Include="mc4cli.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

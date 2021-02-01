@@ -2,28 +2,8 @@
 #include<stdlib.h>
 #include<stdint.h>
 
-#define MAX_MEM (1024*64)
-
-#define WORD(h, l) (((h) << 8) + (l))
-
-typedef struct CPU {
-    uint16_t PC;
-    uint16_t SP;
-    
-    uint8_t A;
-    uint8_t B;
-
-    uint8_t FLAGS;
-} CPU;
-
-typedef struct Memory {
-    uint8_t Data[MAX_MEM];
-} Memory;
-
-enum Flags {
-    J = (0 << 0),
-    Z = (0 << 1)
-};
+#include "emu.h"
+#include "instructions.h"
 
 void fetch(CPU* cpu, Memory* mem, uint8_t* data) {
     *data = mem->Data[cpu->PC];
@@ -52,26 +32,14 @@ void initMemory(Memory* mem) {
     }
 }
 
-#define INS_NOOP    (0x00)
-#define INS_HALT    (0xF0)
-#define INS_LDA_LIT (0x01)
-#define INS_LDA_PTR (0x02)
-#define INS_LDB_LIT (0x11)
-#define INS_LDB_PTR (0x12)
-#define INS_CMP_LIT (0xA0)
-#define INS_CMP_PTR (0xA1)
-#define INS_JMP_LIT (0xB0)
-#define INS_JMP_PTR (0xB1)
-#define INS_JMP_REG (0xB2)
-
-void setFlag(CPU* cpu, int flag, unsigned int value) {
+static void setFlag(CPU* cpu, int flag, unsigned int value) {
     if (value == 1)
         cpu->FLAGS |= flag;
     else
         cpu->FLAGS &= ~(flag);
 }
 
-char getFlag(CPU* cpu, int flag) {
+static char getFlag(CPU* cpu, int flag) {
     return (cpu->FLAGS & flag) > 0;
 }
 
@@ -181,44 +149,4 @@ void run(CPU* cpu, Memory* mem, uint32_t tics, uint32_t runForever) {
         if (doOne(cpu, mem) == 0) break;
         tics--;
     }
-}
-
-int main(const int argc, char* argv[]) {
-    char* filename;
-
-    if (argc < 2) {
-        filename = "./data.bin";
-    }
-    else {
-        filename = argv[1];
-    }
-
-    FILE* binary = fopen(filename, "rb");
-
-    if (binary == NULL) {
-        fprintf(stderr, "No file!?\n");
-        return 1;
-    }
-
-    CPU cpu;
-    Memory* memory = malloc(sizeof(Memory));
-
-    initMemory(memory);
-
-    int read = fread(memory->Data, 1, MAX_MEM, binary);
-    if (read < MAX_MEM) {
-        fprintf(stderr, "File too small or error!\n");
-        free(memory);
-        fclose(binary);
-
-        return 1;
-    }
-
-    resetCPU(&cpu, memory);
-    run(&cpu, memory, 0, 1);
-
-    free(memory);
-    fclose(binary);
-
-    return 0;
 }
