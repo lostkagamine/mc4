@@ -4,6 +4,8 @@
 
 #define MAX_MEM (1024*64)
 
+#define WORD(h, l) (((h) << 8) + (l))
+
 typedef struct CPU {
     uint16_t PC;
     uint16_t SP;
@@ -23,23 +25,31 @@ enum Flags {
     Z = (0 << 1)
 };
 
+void fetch(CPU* cpu, Memory* mem, uint8_t* data) {
+    *data = mem->Data[cpu->PC];
+    cpu->PC++;
+}
+
 void resetCPU(CPU* cpu, Memory* mem) {
     cpu->PC = 0xFFF0;
     cpu->SP = 0x0;
     cpu->A = 0x0;
     cpu->B = 0x0;
     cpu->FLAGS = 0x0;
+
+    uint8_t newPC_low;
+    uint8_t newPC_high;
+
+    fetch(cpu, mem, &newPC_low);
+    fetch(cpu, mem, &newPC_high);
+
+    cpu->PC = WORD(newPC_low, newPC_high);
 }
 
 void initMemory(Memory* mem) {
     for (unsigned int i = 0; i < MAX_MEM; i++) {
         mem->Data[i] = 0x0;
     }
-}
-
-void fetch(CPU* cpu, Memory* mem, uint8_t* data) {
-    *data = mem->Data[cpu->PC];
-    cpu->PC++;
 }
 
 #define INS_NOOP    (0x00)
@@ -53,8 +63,6 @@ void fetch(CPU* cpu, Memory* mem, uint8_t* data) {
 #define INS_JMP_LIT (0xB0)
 #define INS_JMP_PTR (0xB1)
 #define INS_JMP_REG (0xB2)
-
-#define WORD(h, l) (((h) << 8) + (l))
 
 void setFlag(CPU* cpu, int flag, unsigned int value) {
     if (value == 1)
@@ -196,7 +204,6 @@ int main(const int argc, char* argv[]) {
     Memory* memory = malloc(sizeof(Memory));
 
     initMemory(memory);
-    resetCPU(&cpu, memory);
 
     int read = fread(memory->Data, 1, MAX_MEM, binary);
     if (read < MAX_MEM) {
@@ -207,6 +214,7 @@ int main(const int argc, char* argv[]) {
         return 1;
     }
 
+    resetCPU(&cpu, memory);
     run(&cpu, memory, 0, 1);
 
     free(memory);
