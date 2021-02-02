@@ -28,14 +28,21 @@ void MC4_reset(MC4_Context* ctx) {
 }
 
 static void setFlag(CPU* cpu, int flag, unsigned int value) {
-    if (value == 1)
-        cpu->FLAGS |= flag;
-    else
-        cpu->FLAGS &= ~(flag);
+    cpu->FLAGS = (cpu->FLAGS & ~flag) | flag;
 }
 
 static char getFlag(CPU* cpu, int flag) {
     return (cpu->FLAGS & flag) > 0;
+}
+
+static uint16_t pointer(MC4_Context* ctx) {
+    uint8_t high;
+    uint8_t low;
+
+    MC4_fetch(ctx, &high);
+    MC4_fetch(ctx, &low);
+
+    return WORD(high, low);
 }
 
 int MC4_runCycle(MC4_Context* ctx) {
@@ -54,21 +61,19 @@ int MC4_runCycle(MC4_Context* ctx) {
 
         ctx->cpu->A = dat;
 
+        setFlag(ctx->cpu, Z, ctx->cpu->A == 0);
+
         break;
     };
     case INS_LDA_PTR:
     {
-        uint8_t high;
-        uint8_t low;
-
-        MC4_fetch(ctx, &high);
-        MC4_fetch(ctx, &low);
-
-        uint16_t addr = WORD(high, low);
+        uint16_t addr = pointer(ctx);
 
         uint8_t val;
         MC4_readBus(ctx->bus, addr, &val);
         ctx->cpu->A = val;
+
+        setFlag(ctx->cpu, Z, ctx->cpu->A == 0);
 
         break;
     };
@@ -84,13 +89,7 @@ int MC4_runCycle(MC4_Context* ctx) {
     };
     case INS_LDB_PTR:
     {
-        uint8_t high;
-        uint8_t low;
-
-        MC4_fetch(ctx, &high);
-        MC4_fetch(ctx, &low);
-
-        uint16_t addr = WORD(high, low);
+        uint16_t addr = pointer(ctx);
 
         uint8_t val;
         MC4_readBus(ctx->bus, addr, &val);
@@ -100,26 +99,15 @@ int MC4_runCycle(MC4_Context* ctx) {
     };
     case INS_JMP_LIT:
     {
-        uint8_t high;
-        uint8_t low;
+        uint16_t res = pointer(ctx);
 
-        MC4_fetch(ctx, &high);
-        MC4_fetch(ctx, &low);
-
-        uint16_t res = WORD(high, low);
         ctx->cpu->PC += res;
 
         break;
     };
     case INS_JMP_PTR:
     {
-        uint8_t high;
-        uint8_t low;
-
-        MC4_fetch(ctx, &high);
-        MC4_fetch(ctx, &low);
-
-        uint16_t addr = WORD(high, low);
+        uint16_t addr = pointer(ctx);
 
         uint8_t valLow;
         uint8_t valHigh;
@@ -137,6 +125,63 @@ int MC4_runCycle(MC4_Context* ctx) {
         ctx->cpu->PC = result;
         break;
     };
+    case INS_JZS_LIT:
+    {
+        uint16_t res = pointer(ctx);
+
+        if (getFlag(ctx->cpu, Z)) ctx->cpu->PC += res;
+
+        break;
+    };
+    case INS_JZS_PTR:
+    {
+        uint16_t addr = pointer(ctx);
+
+        uint8_t valLow;
+        uint8_t valHigh;
+
+        MC4_readBus(ctx->bus, addr, &valHigh);
+        MC4_readBus(ctx->bus, addr + 1, &valLow);
+
+        if (getFlag(ctx->cpu, Z)) ctx->cpu->PC = WORD(valHigh, valLow);
+
+        break;
+    };
+    case INS_JZS_REG:
+    {
+        uint16_t result = WORD(ctx->cpu->A, ctx->cpu->B);
+        if (getFlag(ctx->cpu, Z)) ctx->cpu->PC = result;
+        break;
+    };
+    case INS_JNZ_LIT:
+    {
+        uint16_t res = pointer(ctx);
+
+        if (!getFlag(ctx->cpu, Z)) ctx->cpu->PC += res;
+
+        break;
+    };
+    case INS_JNZ_PTR:
+    {
+        uint16_t addr = pointer(ctx);
+
+        uint8_t valLow;
+        uint8_t valHigh;
+
+        MC4_readBus(ctx->bus, addr, &valHigh);
+        MC4_readBus(ctx->bus, addr + 1, &valLow);
+
+        if (!getFlag(ctx->cpu, Z)) ctx->cpu->PC = WORD(valHigh, valLow);
+
+        break;
+    };
+    case INS_JNZ_REG:
+    {
+        uint16_t result = WORD(ctx->cpu->A, ctx->cpu->B);
+        if (!getFlag(ctx->cpu, Z)) ctx->cpu->PC = result;
+        break;
+    };
+
     case INS_HALT:
     {
         return 0;

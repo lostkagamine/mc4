@@ -7,10 +7,14 @@
 #define INS_LDA_PTR (0x02)
 #define INS_LDB_LIT (0x11)
 #define INS_LDB_PTR (0x12)
-#define INS_CMP_LIT (0xA0)
-#define INS_CMP_PTR (0xA1)
 #define INS_JMP_LIT (0xB0)
 #define INS_JMP_PTR (0xB1)
 #define INS_JMP_REG (0xB2)
+#define INS_JZS_LIT (0xB3)
+#define INS_JZS_PTR (0xB4)
+#define INS_JZS_REG (0xB5)
+#define INS_JNZ_LIT (0xB6)
+#define INS_JNZ_PTR (0xB7)
+#define INS_JNZ_REG (0xB8)
 
 #endif

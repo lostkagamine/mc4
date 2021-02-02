@@ -38,7 +38,7 @@ int main(const int argc, char* argv[]) {
 
     MC4_setBusReadIntercept(&bus, memReadIntercept);
     MC4_setBusWriteIntercept(&bus, memWriteIntercept);
-
+    
     MC4_setBus(&ctx, &bus);
     MC4_setCPU(&ctx, &cpu);
 
