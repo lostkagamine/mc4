@@ -19,7 +19,7 @@ void MC4_setBusWriteIntercept(Bus* bus, MC4_busWriteIntercept intercept) {
 void MC4_readBus(Bus* bus, uint16_t address, uint8_t* data) {
     if (bus->readIntercept == NULL) {
         fprintf(stderr, "Warning: no bus read intercept defined! Bus reads will return 00!\n");
-        data = 0x00;
+        *data = 0x00;
     }
     else {
         bus->readIntercept(address, data);
