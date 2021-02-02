@@ -28,7 +28,10 @@ void MC4_reset(MC4_Context* ctx) {
 }
 
 static void setFlag(CPU* cpu, int flag, unsigned int value) {
-    cpu->FLAGS = (cpu->FLAGS & ~flag) | flag;
+    if (value == 1)
+        cpu->FLAGS |= flag;
+    else
+        cpu->FLAGS &= ~flag;
 }
 
 static char getFlag(CPU* cpu, int flag) {
