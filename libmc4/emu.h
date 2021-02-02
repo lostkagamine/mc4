@@ -24,9 +24,9 @@ typedef struct MC4_Context {
 } MC4_Context;
 
 enum Flags {
-    Z = (0 << 0),   // Zero       set if A == 0
-    O = (0 << 1),   // Overflow   set if ???
-    S = (0 << 2)    // Sign       set if A & 0x80 > 0
+    Z = (1 << 0),   // Zero       set if A == 0
+    O = (1 << 1),   // Overflow   set if ???
+    S = (1 << 2)    // Sign       set if A & 0x80 > 0
 };
 
 extern void MC4_setCPU(MC4_Context* ctx, CPU* cpu);
