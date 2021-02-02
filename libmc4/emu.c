@@ -6,6 +6,8 @@
 #include "instructions.h"
 #include "bus.h"
 
+static uint16_t pointer(MC4_Context* ctx);
+
 void MC4_fetch(MC4_Context* ctx, uint8_t* data) {
     MC4_readBus(ctx->bus, ctx->cpu->PC, data);
     ctx->cpu->PC++;
@@ -18,13 +20,7 @@ void MC4_reset(MC4_Context* ctx) {
     ctx->cpu->B = 0x0;
     ctx->cpu->FLAGS = 0x0;
 
-    uint8_t newPC_low;
-    uint8_t newPC_high;
-
-    MC4_fetch(ctx, &newPC_low);
-    MC4_fetch(ctx, &newPC_high);
-
-    ctx->cpu->PC = WORD(newPC_low, newPC_high);
+    ctx->cpu->PC = pointer(ctx);
 }
 
 static void setFlag(CPU* cpu, int flag, unsigned int value) {
