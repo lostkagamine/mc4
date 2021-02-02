@@ -1,7 +1,17 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<stdint.h>
-#include "../libmc4/emu.h"
+#include "libmc4/emu.h"
+
+uint8_t memory[MAX_MEM] = { 0 };
+
+void memReadIntercept(uint16_t address, uint8_t* data) {
+    *data = memory[address];
+}
+
+void memWriteIntercept(uint16_t address, uint8_t data) {
+    memory[address] = data;
+}
 
 int main(const int argc, char* argv[]) {
     char* filename;
@@ -21,23 +31,29 @@ int main(const int argc, char* argv[]) {
     }
 
     CPU cpu;
-    Memory* memory = malloc(sizeof(Memory));
+    Bus bus;
+    MC4_Context ctx;
 
-    initMemory(memory);
+    MC4_initBus(&bus);
 
-    int read = fread(memory->Data, 1, MAX_MEM, binary);
+    MC4_setBusReadIntercept(&bus, memReadIntercept);
+    MC4_setBusWriteIntercept(&bus, memWriteIntercept);
+
+    MC4_setBus(&ctx, &bus);
+    MC4_setCPU(&ctx, &cpu);
+
+    size_t read = fread(&memory, 1, MAX_MEM, binary);
     if (read < MAX_MEM) {
         fprintf(stderr, "File too small or error!\n");
-        free(memory);
         fclose(binary);
 
         return 1;
     }
 
-    resetCPU(&cpu, memory);
-    run(&cpu, memory, 0, 1);
+    MC4_reset(&ctx);
+    // here we go!
+    MC4_execute(&ctx);
 
-    free(memory);
     fclose(binary);
 
     return 0;

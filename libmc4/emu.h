@@ -4,8 +4,9 @@
 #include<stdint.h>
 
 #define MAX_MEM (1024*64)
-
 #define WORD(h, l) (((h) << 8) + (l))
+
+#include "bus.h"
 
 typedef struct CPU {
     uint16_t PC;
@@ -17,19 +18,21 @@ typedef struct CPU {
     uint8_t FLAGS;
 } CPU;
 
-typedef struct Memory {
-    uint8_t Data[MAX_MEM];
-} Memory;
+typedef struct MC4_Context {
+    CPU* cpu;
+    Bus* bus;
+} MC4_Context;
 
 enum Flags {
     J = (0 << 0),
     Z = (0 << 1)
 };
 
-extern void fetch(CPU* cpu, Memory* mem, uint8_t* data);
-extern void resetCPU(CPU* cpu, Memory* mem);
-extern int doOne(CPU* cpu, Memory* mem);
-extern void run(CPU* cpu, Memory* mem, uint32_t tics, uint32_t runForever);
-extern void initMemory(Memory* mem);
+extern void MC4_setCPU(MC4_Context* ctx, CPU* cpu);
+extern void MC4_setBus(MC4_Context* ctx, Bus* bus);
+extern void MC4_fetch(MC4_Context* ctx, uint8_t* data);
+extern void MC4_reset(MC4_Context* ctx);
+extern int MC4_runCycle(MC4_Context* ctx);
+extern void MC4_execute(MC4_Context* ctx);
 
 #endif

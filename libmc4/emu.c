@@ -4,32 +4,27 @@
 
 #include "emu.h"
 #include "instructions.h"
+#include "bus.h"
 
-void fetch(CPU* cpu, Memory* mem, uint8_t* data) {
-    *data = mem->Data[cpu->PC];
-    cpu->PC++;
+void MC4_fetch(MC4_Context* ctx, uint8_t* data) {
+    MC4_readBus(ctx->bus, ctx->cpu->PC, data);
+    ctx->cpu->PC++;
 }
 
-void resetCPU(CPU* cpu, Memory* mem) {
-    cpu->PC = 0xFFF0;
-    cpu->SP = 0x0;
-    cpu->A = 0x0;
-    cpu->B = 0x0;
-    cpu->FLAGS = 0x0;
+void MC4_reset(MC4_Context* ctx) {
+    ctx->cpu->PC = 0xFFF0;
+    ctx->cpu->SP = 0x0;
+    ctx->cpu->A = 0x0;
+    ctx->cpu->B = 0x0;
+    ctx->cpu->FLAGS = 0x0;
 
     uint8_t newPC_low;
     uint8_t newPC_high;
 
-    fetch(cpu, mem, &newPC_low);
-    fetch(cpu, mem, &newPC_high);
+    MC4_fetch(ctx, &newPC_low);
+    MC4_fetch(ctx, &newPC_high);
 
-    cpu->PC = WORD(newPC_low, newPC_high);
-}
-
-void initMemory(Memory* mem) {
-    for (unsigned int i = 0; i < MAX_MEM; i++) {
-        mem->Data[i] = 0x0;
-    }
+    ctx->cpu->PC = WORD(newPC_low, newPC_high);
 }
 
 static void setFlag(CPU* cpu, int flag, unsigned int value) {
@@ -43,9 +38,9 @@ static char getFlag(CPU* cpu, int flag) {
     return (cpu->FLAGS & flag) > 0;
 }
 
-int doOne(CPU* cpu, Memory* mem) {
+int MC4_runCycle(MC4_Context* ctx) {
     uint8_t ins;
-    fetch(cpu, mem, &ins);
+    MC4_fetch(ctx, &ins);
 
     switch (ins) {
     case INS_NOOP:
@@ -55,9 +50,9 @@ int doOne(CPU* cpu, Memory* mem) {
     {
         uint8_t dat;
 
-        fetch(cpu, mem, &dat);
+        MC4_fetch(ctx, &dat);
 
-        cpu->A = dat;
+        ctx->cpu->A = dat;
 
         break;
     };
@@ -66,11 +61,14 @@ int doOne(CPU* cpu, Memory* mem) {
         uint8_t high;
         uint8_t low;
 
-        fetch(cpu, mem, &high);
-        fetch(cpu, mem, &low);
+        MC4_fetch(ctx, &high);
+        MC4_fetch(ctx, &low);
 
         uint16_t addr = WORD(high, low);
-        cpu->A = mem->Data[addr];
+
+        uint8_t val;
+        MC4_readBus(ctx->bus, addr, &val);
+        ctx->cpu->A = val;
 
         break;
     };
@@ -78,9 +76,9 @@ int doOne(CPU* cpu, Memory* mem) {
     {
         uint8_t dat;
 
-        fetch(cpu, mem, &dat);
+        MC4_fetch(ctx, &dat);
 
-        cpu->B = dat;
+        ctx->cpu->B = dat;
 
         break;
     };
@@ -89,11 +87,14 @@ int doOne(CPU* cpu, Memory* mem) {
         uint8_t high;
         uint8_t low;
 
-        fetch(cpu, mem, &high);
-        fetch(cpu, mem, &low);
+        MC4_fetch(ctx, &high);
+        MC4_fetch(ctx, &low);
 
         uint16_t addr = WORD(high, low);
-        cpu->B = mem->Data[addr];
+
+        uint8_t val;
+        MC4_readBus(ctx->bus, addr, &val);
+        ctx->cpu->B = val;
 
         break;
     };
@@ -102,11 +103,11 @@ int doOne(CPU* cpu, Memory* mem) {
         uint8_t high;
         uint8_t low;
 
-        fetch(cpu, mem, &high);
-        fetch(cpu, mem, &low);
+        MC4_fetch(ctx, &high);
+        MC4_fetch(ctx, &low);
 
         uint16_t res = WORD(high, low);
-        cpu->PC += res;
+        ctx->cpu->PC += res;
 
         break;
     };
@@ -115,18 +116,25 @@ int doOne(CPU* cpu, Memory* mem) {
         uint8_t high;
         uint8_t low;
 
-        fetch(cpu, mem, &high);
-        fetch(cpu, mem, &low);
+        MC4_fetch(ctx, &high);
+        MC4_fetch(ctx, &low);
 
         uint16_t addr = WORD(high, low);
-        cpu->PC = mem->Data[addr];
+
+        uint8_t valLow;
+        uint8_t valHigh;
+
+        MC4_readBus(ctx->bus, addr, &valHigh);
+        MC4_readBus(ctx->bus, addr+1, &valLow);
+
+        ctx->cpu->PC = WORD(valHigh, valLow);
 
         break;
     };
     case INS_JMP_REG:
     {
-        uint16_t result = WORD(cpu->A, cpu->B);
-        cpu->PC = result;
+        uint16_t result = WORD(ctx->cpu->A, ctx->cpu->B);
+        ctx->cpu->PC = result;
         break;
     };
     case INS_HALT:
@@ -144,9 +152,16 @@ int doOne(CPU* cpu, Memory* mem) {
     return 1;
 }
 
-void run(CPU* cpu, Memory* mem, uint32_t tics, uint32_t runForever) {
-    while (tics > 0 || runForever != 0) {
-        if (doOne(cpu, mem) == 0) break;
-        tics--;
+void MC4_execute(MC4_Context* ctx) {
+    while (1) {
+        if (MC4_runCycle(ctx) == 0) break;
     }
+}
+
+void MC4_setCPU(MC4_Context* ctx, CPU* cpu) {
+    ctx->cpu = cpu;
+}
+
+void MC4_setBus(MC4_Context* ctx, Bus* bus) {
+    ctx->bus = bus;
 }

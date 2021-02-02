@@ -18,12 +18,18 @@
     <ClCompile Include="emu.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="bus.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="emu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="instructions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
