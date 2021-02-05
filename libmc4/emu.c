@@ -180,6 +180,26 @@ int MC4_runCycle(MC4_Context* ctx) {
         if (!getFlag(ctx->cpu, Z)) ctx->cpu->PC = result;
         break;
     };
+    case INS_INA:
+    {
+        ctx->cpu->A += 1;
+        break;
+    };
+    case INS_INB:
+    {
+        ctx->cpu->B += 1;
+        break;
+    };
+    case INS_DEA:
+    {
+        ctx->cpu->A -= 1;
+        break;
+    };
+    case INS_DEB:
+    {
+        ctx->cpu->B -= 1;
+        break;
+    };
 
     case INS_HALT:
     {

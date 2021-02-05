@@ -16,5 +16,9 @@
 #define INS_JNZ_LIT (0xB6)
 #define INS_JNZ_PTR (0xB7)
 #define INS_JNZ_REG (0xB8)
+#define INS_INA     (0xA0)
+#define INS_INB     (0xA1)
+#define INS_DEA     (0xA2)
+#define INS_DEB     (0xA3)
 
 #endif
