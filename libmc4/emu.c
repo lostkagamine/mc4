@@ -200,6 +200,43 @@ int MC4_runCycle(MC4_Context* ctx) {
         ctx->cpu->B -= 1;
         break;
     };
+    case INS_ADD_LIT:
+    {
+        uint8_t dat;
+
+        MC4_fetch(ctx, &dat);
+
+        uint16_t res = ctx->cpu->A + dat; // Jeez, whoever has to look at this, I'm sorry, okay?
+        
+        uint16_t bit = ((!(ctx->cpu->A ^ dat)) & 0x80);
+
+        setFlag(ctx->cpu, S, (res & 0x80) > 0);
+        setFlag(ctx->cpu, C, (res & 0x100) > 0);
+        setFlag(ctx->cpu, O, (bit ^ (res & 0x80)) > 0);
+        setFlag(ctx->cpu, Z, res == 0);
+
+        ctx->cpu->A = res & 0xFF;
+        break;
+    };
+    case INS_ADD_PTR:
+    {
+        uint16_t addr = pointer(ctx);
+        uint8_t dat;
+
+        MC4_readBus(ctx->bus, addr, &dat);
+
+        uint16_t res = ctx->cpu->A + dat;
+
+        uint16_t bit = ((!(ctx->cpu->A ^ dat)) & 0x80);
+
+        setFlag(ctx->cpu, S, (res & 0x80) > 0);
+        setFlag(ctx->cpu, C, (res & 0x100) > 0);
+        setFlag(ctx->cpu, O, (bit ^ (res & 0x80)) > 0);
+        setFlag(ctx->cpu, Z, res == 0);
+
+        ctx->cpu->A = res & 0xFF;
+        break;
+    };
 
     case INS_HALT:
     {

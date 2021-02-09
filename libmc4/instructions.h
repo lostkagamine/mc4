@@ -20,5 +20,11 @@
 #define INS_INB     (0xA1)
 #define INS_DEA     (0xA2)
 #define INS_DEB     (0xA3)
+#define INS_ADD_LIT (0xA4)
+#define INS_ADD_PTR (0xA5)
+#define INS_SUB_LIT (0xA6)
+#define INS_SUB_PTR (0xA7)
+#define INS_CMP_LIT (0xA8)
+#define INS_CMP_PTR (0xA9)
 
 #endif
